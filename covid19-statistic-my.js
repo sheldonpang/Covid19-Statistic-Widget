@@ -220,47 +220,53 @@ async function prepareMediumWidget(widget, covidStats) {
     })
 }
 
-// Create Widget
-let widget = new ListWidget()
-widget.url = 'https://covid19.place/?lang=en-US#statistics'
+async function main() {
+     // Create Widget
+    let widget = new ListWidget()
+    widget.url = 'https://covid19.place/?lang=en-US#statistics'
 
-const covidStats = await fetchCovidStats()
+    const covidStats = await fetchCovidStats()
 
-widget.setPadding(10, 10, 10, 10)
+    widget.setPadding(10, 10, 10, 10)
 
-if (covidStats != undefined) {
+    if (covidStats != undefined) {
 
-    const gradient = new LinearGradient()
-    gradient.locations = [0, 1]
-    gradient.colors = [
-        backColor,
-        backColor2
-    ]
-    widget.backgroundGradient = gradient
+        const gradient = new LinearGradient()
+        gradient.locations = [0, 1]
+        gradient.colors = [
+            backColor,
+            backColor2
+        ]
+        widget.backgroundGradient = gradient
 
-    switch (config.widgetFamily) {
-        case 'small': await prepareMediumWidget(widget, covidStats); break;
-        case 'medium': await prepareMediumWidget(widget, covidStats); break;
-        case 'large': await prepareMediumWidget(widget, covidStats); break;
-        default: await prepareMediumWidget(widget, covidStats); break;
+        switch (config.widgetFamily) {
+            case 'small': await prepareMediumWidget(widget, covidStats); break;
+            case 'medium': await prepareMediumWidget(widget, covidStats); break;
+            case 'large': await prepareMediumWidget(widget, covidStats); break;
+            default: await prepareMediumWidget(widget, covidStats); break;
+        }
+
+    } else {
+        let fallbackText = widget.addText("Unexpected error.")
+        fallbackText.font = Font.mediumSystemFont(12)
+        fallbackText.textColor = textColor
     }
 
-} else {
-    let fallbackText = widget.addText("Unexpected error.")
-    fallbackText.font = Font.mediumSystemFont(12)
-    fallbackText.textColor = textColor
-}
+    if (!config.runsInWidget) {
+        switch (config.widgetFamily) {
+            case 'small': await widget.presentMedium(); break;
+            case 'medium': await widget.presentMedium(); break;
+            case 'large': await widget.presentMedium(); break;
+            default: await widget.presentMedium(); break;
+        }
 
-if (!config.runsInWidget) {
-    switch (config.widgetFamily) {
-        case 'small': await widget.presentMedium(); break;
-        case 'medium': await widget.presentMedium(); break;
-        case 'large': await widget.presentMedium(); break;
-        default: await widget.presentMedium(); break;
+    } else {
+        // Tell the system to show the widget.
+        Script.setWidget(widget)
+        Script.complete()
     }
-
-} else {
-    // Tell the system to show the widget.
-    Script.setWidget(widget)
-    Script.complete()
 }
+
+module.exports = {
+    main
+};
