@@ -54,9 +54,27 @@ function signColouring(percentage) {
 // fetches the covid stats
 async function fetchCovidStats() {
 
-    let url = "https://covid19.place/forms/u";
-	const req = new Request(url);
-	const apiResult = await req.loadJSON();
+    // let url = "https://covid19.place/forms/u";
+	// const req = new Request(url);
+	// const apiResult = await req.loadJSON();
+
+    let url = "https://covid19.place/?country=MY"
+
+    let wv = new WebView()
+    await wv.loadURL(url)
+    let getData = `
+        function getData(){
+            console.log("get data", D);    
+
+            return JSON.stringify(D)
+        }
+        getData()
+    `
+    let resultDataString = await wv.evaluateJavaScript(getData)
+
+    let apiResult = JSON.parse(resultDataString);
+
+    console.log(apiResult);
 
     let datePointer = -1; // Today = -1, Yesterday = -2
 
