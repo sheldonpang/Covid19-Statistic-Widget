@@ -17,7 +17,6 @@ const numberOfDisplayedDataBySize = {
 let backColor = new Color('FFFFFF')
 let backColor2 = new Color('EDEDED')
 let textColor = new Color('000000')
-// let lastUpdateColor = new Color('E9ECEF')
 let lastUpdateColor = new Color('6C757D')
 
 let newCaseColor = new Color('F7A437')
@@ -54,66 +53,67 @@ function signColouring(percentage) {
 // fetches the covid stats
 async function fetchCovidStats() {
 
-    // let url = "https://covid19.place/forms/u";
-	// const req = new Request(url);
-	// const apiResult = await req.loadJSON();
-
     let url = "https://covid19.place/?country=MY"
 
     let wv = new WebView()
     await wv.loadURL(url)
     let getData = `
         function getData(){
-            console.log("get data", D);    
-
-            return JSON.stringify(D)
+            return JSON.stringify(TIMELINE_JS)
         }
         getData()
     `
     let resultDataString = await wv.evaluateJavaScript(getData)
 
-    let apiResult = JSON.parse(resultDataString);
+    let resultDataJson = JSON.parse(resultDataString);
+    let apiResult = resultDataJson.GRAPH_TIMELINE["30"];
 
-    console.log(apiResult);
+    let data = await getCSV();
+
+    // console.log(data);
+
+    // console.log(apiResult);
 
     let datePointer = -1; // Today = -1, Yesterday = -2
 
-    let todayNewCase = apiResult.GRAPH_STATS.new.cases.val.slice(datePointer)[0];
+    let latestData = data.slice(-1)[0] || data.slice(-2)[0];    
 
-    if (todayNewCase === 0 || todayNewCase === "") {
-        datePointer = -2;
-    }
-
-    let lastUpdate = apiResult.GRAPH_STATS.new.cases.date.slice(datePointer)[0];
+    // console.log(latestData)
     
+    let dataArray = latestData.split(",")
+
+    // console.log(dataArray)
+    
+    let lastUpdate = dataArray[0] || ""
+      
     let newCasesDetails = {
-        title: apiResult.GRAPH_TITLE.REGION.new.cases, 
-        val: apiResult.GRAPH_STATS.new.cases.val.slice(datePointer)[0]
+        title: "New Cases",
+        val: dataArray[1] || 0
     }
 
     let newDeathsDetails = {
-        title: apiResult.GRAPH_TITLE.REGION.new.deaths, 
-        val: apiResult.GRAPH_STATS.new.deaths.val.slice(datePointer)[0]
+        title: "New Deaths", 
+        val: apiResult.new_deaths.datasets[0].data.slice(datePointer)[0]
     }
 
     let newRecoveredDetails = {
-        title: apiResult.GRAPH_TITLE.REGION.new.recovered, 
-        val: apiResult.GRAPH_STATS.new.recovered.val.slice(datePointer)[0]
+        title: "New Recovered",
+        val: dataArray[3] || 0
     }
 
     let activeCasesDetails = {
-        title: apiResult.GRAPH_TITLE.REGION.total.active, 
-        val: apiResult.GRAPH_STATS.total.active.val.slice(datePointer)[0]
+        title: "Active Cases",
+        val: dataArray[4] || 0
     }
 
     let totalDosesDetails = {
-        title: apiResult.GRAPH_TITLE.REGION.total.doses, 
-        val: apiResult.GRAPH_STATS.total.doses.val.slice(datePointer)[0]
+        title: "Vaccinated", 
+        val: apiResult.people_vaccinated.datasets[0].data.slice(datePointer)[0]
     }
 
     let totalCasesDetails = {
-        title: apiResult.GRAPH_TITLE.REGION.total.cases, 
-        val: apiResult.GRAPH_STATS.total.cases.val.slice(datePointer)[0]
+        title: "Total Cases", 
+        val: apiResult.total_cases.datasets[0].data.slice(datePointer)[0]
     }
 
     let dailySummary = [];
@@ -133,6 +133,18 @@ async function fetchCovidStats() {
 
     return resultData;
 }
+
+async function getCSV() {
+    let rawFeed = await loadText("https://raw.githubusercontent.com/MoH-Malaysia/covid19-public/main/epidemic/cases_malaysia.csv");
+    // console.log(rawFeed);  
+    return rawFeed.split('\n');
+  }
+  
+  async function loadText(url) {
+    let req = new Request(url)
+    let txt = await req.loadString()
+    return txt;
+  }
 
 // get images from local filestore or download them once
 async function getImage(image) {
@@ -284,6 +296,8 @@ async function main() {
         Script.complete()
     }
 }
+
+// await main();
 
 module.exports = {
     main
